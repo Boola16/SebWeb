@@ -53,13 +53,30 @@
       			z-index: 999;
     		}
 
-    		#searchBar {
-      			padding: 8px;
-      			width: 300px;
-				height: 40px;
-      			border-radius: 18px;
-      			border: none;
-    		}
+    		.search-wrapper {
+  				position: relative;
+  				display: inline-block;
+			}
+
+			#searchBar {
+  				padding: 8px 40px 8px 12px; /* extra right padding for icon */
+  				width: 300px;
+  				height: 40px;
+  				border-radius: 18px;
+  				border: none;
+  				box-sizing: border-box;
+			}
+
+			.search-icon {
+  				position: absolute;
+  				right: 12px;
+  				top: 50%;
+  				transform: translateY(-50%);
+  				width: 20px;
+  				height: 20px;
+  				pointer-events: none; /* prevents clicking blocking the input */
+			}
+
 
     		#searchForm button {
       			display: none !important
@@ -142,8 +159,12 @@
 	 
 	 </div>
   	<form id="searchForm">
-    	<input type="text" id="searchBar" placeholder="🔎What do you want to search today?"/>
-  	</form>
+  		<div class="search-wrapper">
+    		<input type="text" id="searchBar" placeholder="🔎 What do you want to search today?">
+    		<img class="search-icon" src="https://cdn-icons-png.flaticon.com/512/622/622669.png">
+  		</div>
+	</form>
+
 
 		<script>
 			function doSearch() {
