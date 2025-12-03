@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fredoka:wght@300..700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>SebWeb Chatbot</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Press start 2p', serif;
+      background: url('https://www.topgear.com/sites/default/files/2021/08/04%20DSC06357.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .chatbox {
+      width: 75%; /* mobile-friendly */
+      max-width: 1000px;
+      height: 70vh;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-right: 4px;
+    }
+
+    .msg {
+      padding: 10px;
+      border-radius: 10px;
+      max-width: 75%;
+      white-space: pre-wrap;
+      line-height: 1.4;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .user { align-self: flex-end; background: #3b82f6; color: white; }
+    .bot { align-self: flex-start; background: #0f172a; border: 1px solid #334155; }
+
+    .input-area {
+      display: flex;
+      gap: 8px;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: rgba(15,23,42,0.8);
+      color: white;
+	  font-family: 'Press start 2p', serif;
+    }
+
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+	  font-family: 'Press start 2p', serif;
+    }
+
+    button:hover { background: #2563eb; }
+  </style>
+</head>
+<body>
+
+<div class="chatbox">
+  <div class="messages" id="messages"></div>
+  <div class="input-area">
+    <input id="input" placeholder="Say something..." />
+    <button id="send">Send</button>
+  </div>
+</div>
+
+<script>
+  const messagesEl = document.getElementById("messages");
+  const inputEl = document.getElementById("input");
+
+  // --- Chatbot responses ---
+  const responses = [
+    { mode: "any", triggers: ["hello", "hi"], reply: "Hello! How are you?" },
+    { mode: "any", triggers: ["joke"], reply: "Why did the web developer go broke? Because he used up all his cache!" },
+    { mode: "any", triggers: ["day", "weekday"], reply: "Today is {day}." },
+    { mode: "any", triggers: ["date", "today"], reply: "Today's date is {date}." },
+    { mode: "any", triggers: ["time", "clock"], reply: "The current time is {time}." },
+    { mode: "all", triggers: ["generate","code"], reply: "Sorry, I don't have the ability generate code yet." },
+	{ mode: "any", triggers: ["love 67", "love the meme 67","love the number 67","like 67", "like the meme 67","like the number 67"], reply: "67 is terrible bro." },
+	{ mode: "all", triggers: ["your","creator"], reply: "Seb is my creator, and his platform is SebWeb." },
+    // Add more responses here...
+  ];
+
+  // --- Functions for dynamic placeholders ---
+  function getDayOfWeek() {
+    const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    return days[new Date().getDay()];
+  }
+
+  function getDate() {
+    return new Date().toLocaleDateString();
+  }
+
+  function getTime() {
+    return new Date().toLocaleTimeString();
+  }
+
+  // --- Function to add text messages ---
+  function addMsg(role, text) {
+    const div = document.createElement("div");
+    div.className = "msg " + role;
+    div.textContent = text;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  // --- Function to add stock images ---
+  function addStockImage(prompt) {
+    if (!prompt) return;
+
+    const img = new Image();
+    img.src = `https://source.unsplash.com/400x400/?${encodeURIComponent(prompt)}`;
+    img.style.maxWidth = "100%";
+    img.style.height = "auto";
+    img.style.borderRadius = "10px";
+    img.style.display = "block";
+    img.style.marginTop = "5px";
+
+    // Loading placeholder
+    const placeholder = document.createElement("div");
+    placeholder.textContent = "Loading image...";
+    placeholder.style.color = "#aaa";
+    messagesEl.appendChild(placeholder);
+
+    img.onload = () => {
+      messagesEl.removeChild(placeholder);
+      messagesEl.appendChild(img);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    };
+
+    img.onerror = () => {
+      messagesEl.removeChild(placeholder);
+      addMsg("bot", "Failed to load image. Try different keywords.");
+    };
+  }
+
+  // --- Main reply function ---
+  function getReply(text) {
+    const lower = text.toLowerCase();
+    const matchedReplies = [];
+
+    for (const r of responses) {
+      const isMatch = r.mode === "any"
+        ? r.triggers.some(word => lower.includes(word))
+        : r.triggers.every(word => lower.includes(word));
+
+      if (isMatch) {
+        let replyText = r.reply;
+        replyText = replyText.replace("{day}", getDayOfWeek())
+                             .replace("{date}", getDate())
+                             .replace("{time}", getTime());
+        matchedReplies.push(replyText);
+      }
+    }
+
+    return matchedReplies.length ? matchedReplies.join("\n") : "Sorry, I don't understand that yet.";
+  }
+
+  // --- Send message ---
+  function send() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    addMsg("user", text);
+    inputEl.value = "";
+
+    const trigger = "make me an image of a";
+
+    if (text.toLowerCase().startsWith(trigger)) {
+      const prompt = text.slice(trigger.length).trim();
+      if (prompt) {
+        addStockImage(prompt);
+      } else {
+        addMsg("bot", "Please specify what you want an image of.");
+      }
+    } else {
+      const reply = getReply(text);
+      addMsg("bot", reply);
+    }
+  }
+
+  // --- Event listeners ---
+  inputEl.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
+  document.getElementById("send").addEventListener("click", send);
+</script>
+
+</body>
+</html>
