@@ -171,7 +171,7 @@
     if (!prompt) return;
 
     const img = new Image();
-    img.src = `https://source.unsplash.com/400x400/?${encodeURIComponent(prompt)}`;
+    img.src = `https://picsum.photos/seed/${encodeURIComponent(prompt)}/400/400`;
     img.style.maxWidth = "100%";
     img.style.height = "auto";
     img.style.borderRadius = "10px";
